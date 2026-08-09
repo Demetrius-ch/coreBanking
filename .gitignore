@@ -1,0 +1,13 @@
+# Données de test locales
+banking.json
+
+# Binaires et builds Go
+*.exe
+*.exe?
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+gestionbancaire
+frontend
