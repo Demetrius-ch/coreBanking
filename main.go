@@ -4,6 +4,7 @@ package main
 import (
 	"fmt"
 	"net/http"
+	"os"
 
 	"gestionbancaire/handlers"
 	"gestionbancaire/middleware"
@@ -13,6 +14,11 @@ import (
 func main() {
 	// 1. Initialisation du stock
 	storage.ChargerFichier()
+	port := os.Getenv("PORT")
+
+	if port == "" {
+		port = "8080"
+	}
 
 	// 2. Initialisation du routeur HTTP natif
 	mux := http.NewServeMux()
@@ -26,12 +32,12 @@ func main() {
 	// Consultation
 	mux.HandleFunc("GET /audit", handlers.GetAuditLogs)
 
-	// 4. Encapsulation par le Middleware
-	handlerChaine := middleware.Logger(mux)
+	// 4. Encapsulation par le Middleware (CORS + Logger)
+	handlerChaine := middleware.EnableCORS(middleware.Logger(mux))
 
 	// 5. Démarrage
-	fmt.Println("🚀 Serveur Core Banking opérationnel sur http://localhost:8080")
-	if err := http.ListenAndServe(":8080", handlerChaine); err != nil {
+	fmt.Printf(" Serveur Core Banking opérationnel sur le port %s\n", port)
+	if err := http.ListenAndServe(":"+port, handlerChaine); err != nil {
 		fmt.Println("Erreur au démarrage du serveur :", err)
 	}
 }
