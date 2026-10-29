@@ -2,6 +2,9 @@ package models
 
 import "time"
 
+// Tous les montants sont exprimés en centimes (int64) pour éviter les erreurs d'arrondi
+// des nombres flottants. Ex : 1234 = 12,34 EUR.
+
 // Gestion des clients
 type Customer struct {
 	ID          int    `json:"id"`
@@ -12,11 +15,11 @@ type Customer struct {
 
 // Gestion de Compte
 type Account struct {
-	ID         int     `json:"id"`
-	CustomerID int     `json:"customer_id"` // Clé étrangère vers Customer
-	Solde      float64 `json:"solde"`
-	Decouvert  float64 `json:"decouvert"` // Montant de découvert autorisé
-	Devise     string  `json:"devise"`    // Ex: "EUR", "USD"
+	ID                int    `json:"id"`
+	CustomerID        int    `json:"customer_id"` // Clé étrangère vers Customer
+	SoldeCentimes     int64  `json:"solde_centimes"`
+	DecouvertCentimes int64  `json:"decouvert_centimes"` // Montant de découvert autorisé
+	Devise            string `json:"devise"`             // Ex: "EUR", "USD"
 }
 
 //Module Transaction & Virements
@@ -25,24 +28,39 @@ type Transfer struct {
 	ID                   int       `json:"id"`
 	AccountSourceID      int       `json:"account_source_id"`
 	AccountDestinationID int       `json:"account_destination_id"`
-	Montant              float64   `json:"montant"`
+	MontantCentimes      int64     `json:"montant_centimes"`
 	Date                 time.Time `json:"date"`
 }
 
 // Module Prêt & Crédits
 type Loan struct {
-	ID              int     `json:"id"`
-	AccountID       int     `json:"account_id"` // Clé étrangère vers Account
-	MontantEmprunte float64 `json:"montant_emprunte"`
-	MontantRestant  float64 `json:"montant_restant"`
-	Taux            float64 `json:"taux"`
+	ID                      int   `json:"id"`
+	AccountID               int   `json:"account_id"` // Clé étrangère vers Account
+	MontantEmprunteCentimes int64 `json:"montant_emprunte_centimes"`
+	MontantRestantCentimes  int64 `json:"montant_restant_centimes"`
+	TauxPB                  int   `json:"taux_pb"` // Taux en points de base : 350 = 3,50 %
 }
 
 // Audit & Conformité
 type AuditLog struct {
 	ID         int       `json:"id"`
-	Action     string    `json:"action"` // Ex: "PROT_GRANTED", "TRANSFER_BLOCKED"
+	Action     string    `json:"action"` // Ex: "LOAN_GRANTED", "TRANSFER_BLOCKED"
 	Details    string    `json:"details"`
-	Timestamp  string    `json:"timestamp"`
 	Horodatage time.Time `json:"horodatage"`
+}
+
+// Rôles d'accès à l'API
+const (
+	RoleClient = "client"
+	RoleAdmin  = "admin"
+)
+
+// Utilisateur de l'API (identifiants de connexion)
+type User struct {
+	ID             int    `json:"id"`
+	Email          string `json:"email"`
+	MotDePasseHash string `json:"mot_de_passe_hash"` // Jamais renvoyé par l'API
+	Role           string `json:"role"`              // RoleClient ou RoleAdmin
+	CustomerID     int    `json:"customer_id"`       // 0 pour un admin
+	VersionJeton   int    `json:"version_jeton"`     // Incrémentée à la déconnexion : invalide tous les jetons émis avant
 }
